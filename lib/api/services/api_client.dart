@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:task_manager/api/controllers/auth_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:http/http.dart';
 
@@ -56,7 +57,7 @@ class ApiClient {
       Future<Response> Function() request) async {
     try {
       final response = await request();
-      printNetwork(response.request?.url.toString() ?? 'Unknown URL', response);
+      printNetwork(response.request!.url.toString(), response);
       return _handleResponse(response);
     } on SocketException {
       return _handleError("No internet connection");
@@ -70,17 +71,24 @@ class ApiClient {
     try {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         if (data["status"] == "success") {
           return NetworkResponse.success(
             data: data,
             statusCode: response.statusCode,
           );
-        } else if (data["status"] == "fail") {
+        } else if (data["data"] == "Something went wrong") {
           return NetworkResponse.error(
             error: "This email address is already in the database",
             statusCode: response.statusCode,
           );
-        } else {
+        }else if(data["data"] == "No user found. Try again!" ){
+          return NetworkResponse.error(
+            error: jsonDecode(response.body)["data"],
+            statusCode: response.statusCode,
+          );
+        }
+        else {
           return NetworkResponse.error(
             error: "Unexpected response format",
             statusCode: response.statusCode,

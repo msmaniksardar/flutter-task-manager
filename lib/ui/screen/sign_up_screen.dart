@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
+import 'package:task_manager/ui/screen/sign_in_screen.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
 import 'package:task_manager/ui/widget/background_screen.dart';
 
@@ -61,11 +62,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
       child: Column(
         children: [
           // First Name Input
-          _buildTextField(_firstNameController, "First Name", "First Name is Required"),
+          _buildTextField(
+              _firstNameController, "First Name", "First Name is Required"),
           const SizedBox(height: 20),
 
           // Last Name Input
-          _buildTextField(_lastNameController, "Last Name", "Last Name is Required"),
+          _buildTextField(
+              _lastNameController, "Last Name", "Last Name is Required"),
           const SizedBox(height: 20),
 
           // Email Input
@@ -96,20 +99,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
           const SizedBox(height: 20),
 
           ElevatedButton(
-            onPressed: _isLoading ? null : _onTabSignInButton, // Disable button during loading
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                signUp();
+              }
+            }, // Disable button during loading
             child: _isLoading
                 ? const CircularProgressIndicator() // Show loader
                 : const Icon(
-              Icons.arrow_circle_right_outlined,
-              color: Colors.white,
-            ),
+                    Icons.arrow_circle_right_outlined,
+                    color: Colors.white,
+                  ),
           ),
         ],
       ),
     );
   }
 
-  TextFormField _buildTextField(TextEditingController controller, String hint, String errorMessage, {TextInputType? keyboardType, bool obscureText = false}) {
+  TextFormField _buildTextField(
+      TextEditingController controller, String hint, String errorMessage,
+      {TextInputType? keyboardType, bool obscureText = false}) {
     return TextFormField(
       controller: controller,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -141,7 +150,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 TextSpan(
                   text: " Sign In",
                   style: const TextStyle(color: AppColor.themeColor),
-                  recognizer: TapGestureRecognizer()..onTap = _onTabSignInButton,
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = _onTabSignInButton,
                 ),
               ],
             ),
@@ -152,9 +162,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _onTabSignInButton() {
-    if (_formKey.currentState!.validate()) {
-      signUp();
-    }
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => const SignInScreen()));
   }
 
   void signUp() async {
@@ -171,12 +180,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
       "photo": ""
     };
 
-    NetworkResponse networkResponse = await ApiClient.postRequest(NetworkURL.registrationUrl, requestBody);
+    NetworkResponse networkResponse =
+        await ApiClient.postRequest(NetworkURL.registrationUrl, requestBody);
 
     if (networkResponse.isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User Created Successfully")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("User Created Successfully")));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(networkResponse.isError.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(networkResponse.isError.toString())));
       print(networkResponse.isError);
     }
 
