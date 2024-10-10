@@ -16,6 +16,7 @@ class Authentication {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     accessToken = sharedPreferences.getString(accessTokenKey);
     return accessToken;
+
   }
 
   // Check if the user is logged in

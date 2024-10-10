@@ -11,7 +11,7 @@ class NetworkResponse {
       this.isError = "INTERNAL SERVER ERROR"});
 
   factory NetworkResponse.success(
-      {required Map<String, dynamic> data, statusCode}) {
+      {required  dynamic data, statusCode}) {
     return NetworkResponse(
       isSuccess: true,
       data: data,

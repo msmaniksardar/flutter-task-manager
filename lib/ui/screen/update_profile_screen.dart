@@ -36,7 +36,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: TMAppBar(),
+      appBar: TMAppBar( isProfileScreenOpen: true,),
       body: BackgroundScreen(
         child: Padding(
           padding: const EdgeInsets.all(25),

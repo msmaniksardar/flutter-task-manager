@@ -1,5 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:task_manager/api/models/network_response.dart';
+import 'package:task_manager/api/services/api_client.dart';
+import 'package:task_manager/api/utils/urls.dart';
 import 'package:task_manager/ui/widget/app_bar.dart';
 
 import '../utility/app_colors.dart';
@@ -30,7 +33,7 @@ class _AddNewTaskState extends State<AddNewTask> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: TMAppBar(),
+      appBar: TMAppBar( isProfileScreenOpen: true,),
       body: BackgroundScreen(
         child: Padding(
           padding: const EdgeInsets.all(25),
@@ -74,7 +77,7 @@ class _AddNewTaskState extends State<AddNewTask> {
         ),
         const SizedBox(height: 30),
         ElevatedButton(
-          onPressed: _onTabSignInButton,
+          onPressed: _onTabAddTask,
           child: const Icon(
             Icons.arrow_circle_right_outlined,
             color: Colors.white,
@@ -86,13 +89,20 @@ class _AddNewTaskState extends State<AddNewTask> {
 
 
 
-  void _onTabSignInButton() {
-    // Todo : Handle sign-in logic here
+  void _onTabAddTask() {
+
   }
 
-  void _onTabForgetPasswordButton() {
-    // Todo: Handle forget password logic here
+  Future<void> addTask()async{
+
+    Map<String ,dynamic> requestBody = {
+
+    };
+
+    NetworkResponse response = await ApiClient.postRequest(NetworkURL.createTaskUrl, requestBody);
   }
+
+
 
 
 }

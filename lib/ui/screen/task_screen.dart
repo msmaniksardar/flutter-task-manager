@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/api/models/network_response.dart';
+import 'package:task_manager/api/models/task_list_model.dart';
+import 'package:task_manager/api/services/api_client.dart';
+import 'package:task_manager/api/utils/urls.dart';
 import 'package:task_manager/ui/widget/app_bar.dart';
 
 class TaskScreen extends StatefulWidget {
@@ -9,6 +13,16 @@ class TaskScreen extends StatefulWidget {
 }
 
 class _TaskScreenState extends State<TaskScreen> {
+  String _status = "New";
+  bool isLoading = false;
+  List<TaskList> taskList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    getNewTask();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,15 +35,16 @@ class _TaskScreenState extends State<TaskScreen> {
             const SizedBox(height: 10), // Spacing before header
             _buildTaskHeader(), // Header section
             const SizedBox(height: 10), // Spacing after header
-            Expanded(
-              // To avoid overflow errors, wrap ListView in Expanded
-              child: ListView.builder(
-                itemBuilder: (context, index) {
-                  return _buildTaskInfo();
-                },
-                itemCount: 10,
-              ),
-            ),
+            isLoading
+                ? Center(child: CircularProgressIndicator())
+                : Expanded(
+                    child: ListView.builder(
+                      itemCount: taskList.length,
+                      itemBuilder: (context, index) {
+                        return _buildTaskInfo(taskList[index]);
+                      },
+                    ),
+                  ),
           ],
         ),
       ),
@@ -37,7 +52,7 @@ class _TaskScreenState extends State<TaskScreen> {
   }
 
   // Content
-  Widget _buildTaskInfo() {
+  Widget _buildTaskInfo(TaskList task) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
       child: Container(
@@ -46,48 +61,45 @@ class _TaskScreenState extends State<TaskScreen> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
-              // Lighter, softer shadow color
               spreadRadius: 0.5,
-              // Minimal spread for more subtle effect
               blurRadius: 8,
-              // Larger blur for a soft shadow
-              offset: const Offset(2, 4), // Slight offset for depth
+              offset: const Offset(2, 4),
             ),
           ],
-          // Adding rounded corners for a polished look
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Lorem ipsum is simply dummy"),
-              const Text("Hello I am not agree with you for this project"),
-              const Text("Date : 10/12/2003"),
+              Text(task.title),
+              Text(task.description),
+              Text("Date: ${task.createdAt}"),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: const Chip(label: Text("New")),
+                    child: Chip(label: Text(task.status)),
                   ),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                          onPressed: () {
-                            _onTabUpdateButton();
-                          },
-                          icon: const Icon(Icons.update)),
+                        onPressed: () {
+                          _onTabUpdateButton();
+                        },
+                        icon: const Icon(Icons.update),
+                      ),
                       IconButton(
-                          onPressed: () {
-                            _onTabDeleteButton();
-                          },
-                          icon: const Icon(Icons.delete))
+                        onPressed: () {
+                          _onTabDeleteButton();
+                        },
+                        icon: const Icon(Icons.delete),
+                      ),
                     ],
-                  )
+                  ),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -122,13 +134,12 @@ class _TaskScreenState extends State<TaskScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1), // Subtle shadow
+              color: Colors.black.withOpacity(0.1),
               spreadRadius: 0.5,
               blurRadius: 8,
               offset: const Offset(2, 4),
             ),
           ],
-          // Rounded corners
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -157,29 +168,68 @@ class _TaskScreenState extends State<TaskScreen> {
 
   void _onTabUpdateButton() {
     showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("Edit Task"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: ["New", "Completed", "Canceled", "Progress"]
-                  .map((status) => ListTile(
-                        title: Text(status),
-                      ))
-                  .toList(),
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Edit Task"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: ["New", "Completed", "Canceled", "Progress"]
+                .map((status) => ListTile(
+                      title: Text(status),
+                      onTap: () {
+                        // Handle status update logic here
+                        Navigator.pop(context);
+                      },
+                    ))
+                .toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Chip(label: Text("Cancel")),
             ),
-            actions: [
-              TextButton(onPressed: () {}, child: Chip(label: Text("Okay"))),
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Chip(label: Text("Cancel"))),
-            ],
-          );
-        });
+          ],
+        );
+      },
+    );
   }
 
-  void _onTabDeleteButton() {}
+  void _onTabDeleteButton() {
+    // Add delete logic here
+  }
+
+  Future<void> getNewTask() async {
+    setState(() {
+      isLoading = true;
+    });
+    NetworkResponse response =
+        await ApiClient.getRequest(NetworkURL.listByStatus + "/$_status");
+    if (response.isSuccess) {
+      List<dynamic> data = response.data["data"];
+      final tasks = data
+          .map((item) => TaskList(
+                id: item["id"] ?? "",
+                title: item["title"] ?? "",
+                description: item["description"] ?? "",
+                status: item["status"] ?? "",
+                email: item["email"] ?? "",
+                createdAt: item["createdDate"] ?? "",
+              ))
+          .toList();
+      setState(() {
+        taskList = tasks;
+        isLoading = false;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.isError.toString())),
+      );
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 }

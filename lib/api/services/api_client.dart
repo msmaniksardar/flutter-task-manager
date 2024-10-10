@@ -6,10 +6,13 @@ import 'package:task_manager/api/models/network_response.dart';
 import 'package:http/http.dart';
 
 class ApiClient {
-  static Future<NetworkResponse> getRequest(String url) async {
+  static Future<NetworkResponse> getRequest(String url,
+      {status, id}) async {
     try {
       Uri uri = Uri.parse(url);
-      Response response = await get(uri);
+      final token = await Authentication.getToken();
+      Response response = await get(uri,
+          headers: {"Content-Type": "application/json", "token": "${token}"});
       printNetwork(url, response);
 
       if (response.statusCode == 200) {
@@ -42,16 +45,14 @@ class ApiClient {
     }
   }
 
-  static Future<NetworkResponse> postRequest(String url,
-      Map<String, dynamic> requestBody) async {
-    return _makeRequest(() =>
-        post(
+  static Future<NetworkResponse> postRequest(
+      String url, Map<String, dynamic> requestBody) async {
+    return _makeRequest(() => post(
           Uri.parse(url),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode(requestBody),
         ));
   }
-
 
   static Future<NetworkResponse> _makeRequest(
       Future<Response> Function() request) async {
@@ -66,11 +67,12 @@ class ApiClient {
     }
   }
 
-
   static Future<NetworkResponse> _handleResponse(Response response) async {
     try {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
+        Authentication.saveToken(token: data["token"]);
 
         if (data["status"] == "success") {
           return NetworkResponse.success(
@@ -82,13 +84,12 @@ class ApiClient {
             error: "This email address is already in the database",
             statusCode: response.statusCode,
           );
-        }else if(data["data"] == "No user found. Try again!" ){
+        } else if (data["data"] == "No user found. Try again!") {
           return NetworkResponse.error(
             error: jsonDecode(response.body)["data"],
             statusCode: response.statusCode,
           );
-        }
-        else {
+        } else {
           return NetworkResponse.error(
             error: "Unexpected response format",
             statusCode: response.statusCode,
@@ -117,11 +118,9 @@ class ApiClient {
     );
   }
 
-
   static void printNetwork(String url, Response response) {
     debugPrint(
-      "REQUEST_URL: $url\nRESPONSE: ${response.body}\nSTATUS_CODE: ${response
-          .statusCode}",
+      "REQUEST_URL: $url\nRESPONSE: ${response.body}\nSTATUS_CODE: ${response.statusCode}",
     );
   }
 }

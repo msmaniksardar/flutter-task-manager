@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/ui/screen/add_new_task.dart';
 import 'package:task_manager/ui/screen/cancel_screen.dart';
 import 'package:task_manager/ui/screen/complete_screen.dart';
 import 'package:task_manager/ui/screen/progress_screen.dart';
@@ -24,6 +25,13 @@ class _BottomNavigationWidgetState extends State<BottomNavigationWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const AddNewTask()));
+        },
+        child: Icon(Icons.add),
+      ),
       body: _screen[currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
