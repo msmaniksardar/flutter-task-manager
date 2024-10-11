@@ -4,4 +4,5 @@ class NetworkURL {
   static const String loginUrl = "$baseUrl/login";
   static const String listByStatus = "$baseUrl/listTaskByStatus";
   static const String createTaskUrl = "$baseUrl/createTask";
+  static const String deleteTaskUrl = "$baseUrl/deleteTask";
 }

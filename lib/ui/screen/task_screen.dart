@@ -92,7 +92,8 @@ class _TaskScreenState extends State<TaskScreen> {
                       ),
                       IconButton(
                         onPressed: () {
-                          _onTabDeleteButton();
+                          final id = task.id;
+                         _onTabDeleteButton(id);
                         },
                         icon: const Icon(Icons.delete),
                       ),
@@ -197,8 +198,20 @@ class _TaskScreenState extends State<TaskScreen> {
     );
   }
 
-  void _onTabDeleteButton() {
-    // Add delete logic here
+  void _onTabDeleteButton(id) {
+    deleteTask(id);
+  }
+
+  Future<void> deleteTask(id) async {
+    NetworkResponse response =
+        await ApiClient.getRequest(NetworkURL.deleteTaskUrl + "/${id}");
+    if (response.isSuccess) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Task Delete Successfully")));
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+    }
   }
 
   Future<void> getNewTask() async {
@@ -211,7 +224,7 @@ class _TaskScreenState extends State<TaskScreen> {
       List<dynamic> data = response.data["data"];
       final tasks = data
           .map((item) => TaskList(
-                id: item["id"] ?? "",
+                id: item["_id"] ?? "",
                 title: item["title"] ?? "",
                 description: item["description"] ?? "",
                 status: item["status"] ?? "",

@@ -6,8 +6,7 @@ import 'package:task_manager/api/models/network_response.dart';
 import 'package:http/http.dart';
 
 class ApiClient {
-  static Future<NetworkResponse> getRequest(String url,
-      {status, id}) async {
+  static Future<NetworkResponse> getRequest(String url, {status, id}) async {
     try {
       Uri uri = Uri.parse(url);
       final token = await Authentication.getToken();
@@ -26,7 +25,7 @@ class ApiClient {
         // Attempt to parse the error response
         final errorData = jsonDecode(response.body);
         return NetworkResponse.error(
-          error: errorData['message'] ?? 'Error occurred',
+          error: errorData['data'] ?? 'Error occurred',
           statusCode: response.statusCode,
         );
       }
@@ -47,12 +46,16 @@ class ApiClient {
 
   static Future<NetworkResponse> postRequest(
       String url, Map<String, dynamic> requestBody) async {
+    final token = await Authentication.getToken();
     return _makeRequest(() => post(
           Uri.parse(url),
-          headers: {"Content-Type": "application/json"},
+          headers: {"Content-Type": "application/json", "token": "${token}"},
           body: jsonEncode(requestBody),
         ));
   }
+
+
+
 
   static Future<NetworkResponse> _makeRequest(
       Future<Response> Function() request) async {
@@ -71,35 +74,21 @@ class ApiClient {
     try {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         Authentication.saveToken(token: data["token"]);
-
         if (data["status"] == "success") {
           return NetworkResponse.success(
             data: data,
             statusCode: response.statusCode,
           );
-        } else if (data["data"] == "Something went wrong") {
-          return NetworkResponse.error(
-            error: "This email address is already in the database",
-            statusCode: response.statusCode,
-          );
-        } else if (data["data"] == "No user found. Try again!") {
-          return NetworkResponse.error(
-            error: jsonDecode(response.body)["data"],
-            statusCode: response.statusCode,
-          );
         } else {
           return NetworkResponse.error(
-            error: "Unexpected response format",
+            error: response.body,
             statusCode: response.statusCode,
           );
         }
       } else {
-        // Attempt to parse the error response
-        final errorData = jsonDecode(response.body);
         return NetworkResponse.error(
-          error: errorData['data'],
+          error: jsonDecode(response.body)["data"],
           statusCode: response.statusCode,
         );
       }

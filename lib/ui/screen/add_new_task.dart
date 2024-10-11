@@ -4,7 +4,7 @@ import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
 import 'package:task_manager/ui/widget/app_bar.dart';
-
+import 'package:task_manager/ui/widget/bottom_widget.dart';
 import '../utility/app_colors.dart';
 import '../widget/background_screen.dart';
 
@@ -16,24 +16,27 @@ class AddNewTask extends StatefulWidget {
 }
 
 class _AddNewTaskState extends State<AddNewTask> {
-  final TextEditingController _subjectTextEditingController =
-      TextEditingController();
-  final TextEditingController _descriptionTextEditingController =
-      TextEditingController();
+  final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  bool _inProgress = false;
 
   @override
   void dispose() {
-    _subjectTextEditingController.dispose();
-    _descriptionTextEditingController.dispose();
+    _subjectController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
+
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: TMAppBar( isProfileScreenOpen: true,),
+      appBar: TMAppBar(
+        isProfileScreenOpen: true,
+      ),
       body: BackgroundScreen(
         child: Padding(
           padding: const EdgeInsets.all(25),
@@ -49,7 +52,7 @@ class _AddNewTaskState extends State<AddNewTask> {
                 ),
               ),
               const SizedBox(height: 20),
-              _buildSignInForm(),
+              _buildTaskForm(),
               const SizedBox(height: 50),
             ],
           ),
@@ -58,51 +61,84 @@ class _AddNewTaskState extends State<AddNewTask> {
     );
   }
 
-  Widget _buildSignInForm() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _subjectTextEditingController,
-          decoration: const InputDecoration(
-            hintText: "Subject",
+  Widget _buildTaskForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _subjectController,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            decoration: const InputDecoration(
+              hintText: "Subject",
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a subject';
+              }
+              return null;
+            },
           ),
-        ),
-        const SizedBox(height: 20),
-        TextFormField(
-          maxLines: 5,
-          controller: _descriptionTextEditingController,
-          decoration: const InputDecoration(
-            hintText: "Description",
+          const SizedBox(height: 20),
+          TextFormField(
+            maxLines: 5,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            controller: _descriptionController,
+            decoration: const InputDecoration(
+              hintText: "Description",
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a description';
+              }
+              return null;
+            },
           ),
-        ),
-        const SizedBox(height: 30),
-        ElevatedButton(
-          onPressed: _onTabAddTask,
-          child: const Icon(
-            Icons.arrow_circle_right_outlined,
-            color: Colors.white,
+          const SizedBox(height: 30),
+          ElevatedButton(
+            onPressed: _onAddTaskPressed,
+            child: const Icon(
+              Icons.arrow_circle_right_outlined,
+              color: Colors.white,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-
-
-  void _onTabAddTask() {
-
+  void _onAddTaskPressed() {
+    if (_formKey.currentState!.validate()) {
+      addTask();
+    }
   }
 
-  Future<void> addTask()async{
+  Future<void> addTask() async {
+    setState(() {
+      _inProgress = true;
+    });
 
-    Map<String ,dynamic> requestBody = {
-
+    final Map<String, dynamic> requestBody = {
+      "title": _subjectController.text,
+      "description": _descriptionController.text,
+      "status": "New",
     };
 
-    NetworkResponse response = await ApiClient.postRequest(NetworkURL.createTaskUrl, requestBody);
+    NetworkResponse response =
+        await ApiClient.postRequest(NetworkURL.createTaskUrl, requestBody);
+    setState(() {
+      _inProgress = false;
+    });
+    if (response.isSuccess) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Add Task Successfully")));
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => BottomNavigationWidget()),
+          (context) => false);
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+    }
   }
-
-
-
-
 }
