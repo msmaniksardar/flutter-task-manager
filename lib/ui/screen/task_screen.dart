@@ -86,14 +86,15 @@ class _TaskScreenState extends State<TaskScreen> {
                     children: [
                       IconButton(
                         onPressed: () {
-                          _onTabUpdateButton();
+                          final id = task.id;
+                          _onTabUpdateButton(id);
                         },
                         icon: const Icon(Icons.update),
                       ),
                       IconButton(
                         onPressed: () {
                           final id = task.id;
-                         _onTabDeleteButton(id);
+                          _onTabDeleteButton(id);
                         },
                         icon: const Icon(Icons.delete),
                       ),
@@ -167,7 +168,7 @@ class _TaskScreenState extends State<TaskScreen> {
     );
   }
 
-  void _onTabUpdateButton() {
+  void _onTabUpdateButton(id) {
     showDialog(
       context: context,
       builder: (context) {
@@ -179,8 +180,8 @@ class _TaskScreenState extends State<TaskScreen> {
                 .map((status) => ListTile(
                       title: Text(status),
                       onTap: () {
-                        // Handle status update logic here
-                        Navigator.pop(context);
+                       updateTask(id, status);
+                       Navigator.pop(context);
                       },
                     ))
                 .toList(),
@@ -200,6 +201,7 @@ class _TaskScreenState extends State<TaskScreen> {
 
   void _onTabDeleteButton(id) {
     deleteTask(id);
+    getNewTask();
   }
 
   Future<void> deleteTask(id) async {
@@ -208,6 +210,18 @@ class _TaskScreenState extends State<TaskScreen> {
     if (response.isSuccess) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Task Delete Successfully")));
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+    }
+  }
+
+  Future<void> updateTask(id, status) async {
+    NetworkResponse response = await ApiClient.getRequest(
+        NetworkURL.updateTaskStatusUrl + "/${id}/${status}");
+    if (response.isSuccess) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Status Update Successfully")));
     } else {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(response.isError.toString())));

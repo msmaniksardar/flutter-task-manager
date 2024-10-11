@@ -47,13 +47,10 @@ class ApiClient {
   static Future<NetworkResponse> postRequest(
       String url, Map<String, dynamic> requestBody) async {
     final token = await Authentication.getToken();
-    return _makeRequest(() => post(
-          Uri.parse(url),
-          headers: {"Content-Type": "application/json", "token": "${token}"},
-          body: jsonEncode(requestBody),
-        ));
+    return _makeRequest(() => post(Uri.parse(url),
+        headers: {"Content-Type": "application/json", "token": "${token}"},
+        body: jsonEncode(requestBody)));
   }
-
 
 
 
@@ -112,4 +109,5 @@ class ApiClient {
       "REQUEST_URL: $url\nRESPONSE: ${response.body}\nSTATUS_CODE: ${response.statusCode}",
     );
   }
+
 }
