@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
+import 'package:task_manager/ui/screen/forget_password.dart';
 import 'package:task_manager/ui/screen/sign_up_screen.dart';
 import 'package:task_manager/ui/screen/task_screen.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
@@ -180,14 +181,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
   }
 
-  void _onTabForgetPasswordButton() {
-    // Todo: Handle forget password logic here
-    // Todo : Handle sign-in logic here
 
+  void _onTabForgetPasswordButton() {
+      Navigator.push(context, MaterialPageRoute(builder: (context)=> const ForgetPasswordScreen()));
   }
 
   void _onTabSignUpButton() {
-    // Todo : Handle sign-up logic here
 
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => SignUpScreen()));

@@ -1,11 +1,19 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:task_manager/api/models/network_response.dart';
+import 'package:task_manager/api/services/api_client.dart';
+import 'package:task_manager/api/utils/urls.dart';
 import 'package:task_manager/ui/screen/sign_in_screen.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
 import 'package:task_manager/ui/widget/background_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  const ResetPasswordScreen(
+      {super.key, required this.otp, required this.email});
+
+  final dynamic otp;
+
+  final dynamic email;
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -27,6 +35,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    print("Email From PIN: ${widget.email}");
+    print("Email From PIN: ${widget.otp}");
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -82,7 +92,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         const SizedBox(height: 20),
         const SizedBox(height: 30),
         ElevatedButton(
-          onPressed: _onTabSignInButton,
+          onPressed: _onTabResetPasswordButton,
           child: Text(
             "Confirm",
             style: textTheme.labelLarge
@@ -120,7 +130,34 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   void _onTabResetPasswordButton() {
-    // Todo : Handle sign-in logic here
+    if (_passwordTextEditingController.text !=
+        _confirmPasswordTextEditingController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Password Does Not Match")),
+      );
+    }else{
+      reset();
+    }
+
+  }
+
+  Future<void> reset() async {
+    Map<String, dynamic> requestBody = {
+      "email": widget.email,
+      "OTP": widget.otp,
+      "password": _passwordTextEditingController.text
+    };
+
+    NetworkResponse response = await ApiClient.postRequest(
+        NetworkURL.RecoverResetPassUrl, requestBody);
+    if (response.isSuccess) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.data["data"])));
+      Navigator.push(context , MaterialPageRoute(builder: (context)=> const SignInScreen()));
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+    }
   }
 
   void _onTabSignInButton() {

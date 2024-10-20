@@ -1,30 +1,31 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:task_manager/api/models/network_response.dart';
+import 'package:task_manager/api/services/api_client.dart';
+import 'package:task_manager/api/utils/urls.dart';
+import 'package:task_manager/ui/screen/reset_password.dart';
 import 'package:task_manager/ui/screen/sign_in_screen.dart';
 import 'package:task_manager/ui/screen/sign_up_screen.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
 import 'package:task_manager/ui/widget/background_screen.dart';
 
 class PinVerificationScreen extends StatefulWidget {
-  const PinVerificationScreen({super.key});
+  const PinVerificationScreen({super.key, required this.email});
+
+  final dynamic email;
 
   @override
   State<PinVerificationScreen> createState() => _PinVerificationScreenState();
 }
 
 class _PinVerificationScreenState extends State<PinVerificationScreen> {
-  final TextEditingController _emailTextEditingController =
+  final TextEditingController _otpTextEditingController =
       TextEditingController();
 
   @override
-  void dispose() {
-    _emailTextEditingController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    print("email ${widget.email}");
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -66,6 +67,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
     return Column(
       children: [
         PinCodeTextField(
+          controller: _otpTextEditingController,
           appContext: context,
           length: 6,
           pinTheme: PinTheme(
@@ -82,7 +84,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
         ),
         const SizedBox(height: 30),
         ElevatedButton(
-          onPressed: _onTabSignInButton,
+          onPressed: _onTabForgetPasswordButton,
           child: Text(
             "Verify",
             style: textTheme.labelLarge
@@ -128,6 +130,32 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
   }
 
   void _onTabForgetPasswordButton() {
-    // Todo: Handle forget password logic here
+    verifyCode();
+  }
+
+  Future<void> verifyCode() async {
+    final otp = _otpTextEditingController.text.trim();
+    NetworkResponse response = await ApiClient.getRequest(
+        NetworkURL.RecoverVerifyOTPUrl + "/${widget.email}/${otp}");
+    if (response.isSuccess) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.data["data"])));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => ResetPasswordScreen(
+                    otp: otp,
+                    email: widget.email,
+                  )));
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+    }
+  }
+
+  @override
+  void dispose() {
+    _otpTextEditingController.dispose();
+    super.dispose();
   }
 }

@@ -12,9 +12,12 @@ import 'package:task_manager/ui/widget/bottom_widget.dart';
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: MyApp.navigatorKey,
       home: SplashScreen(),
       theme: lightTheme,
       debugShowCheckedModeBanner: false,

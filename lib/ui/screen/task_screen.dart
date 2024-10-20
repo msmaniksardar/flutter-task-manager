@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/api/models/list_of_status_model.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/models/task_list_model.dart';
+import 'package:task_manager/api/models/task_model.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
 import 'package:task_manager/ui/widget/app_bar.dart';
@@ -15,44 +17,52 @@ class TaskScreen extends StatefulWidget {
 class _TaskScreenState extends State<TaskScreen> {
   String _status = "New";
   bool isLoading = false;
-  List<TaskList> taskList = [];
+  List<TaskModel> taskList = [];
+  List<ListOfStatusModel> taskStatusList = [];
 
   @override
   void initState() {
     super.initState();
     getNewTask();
+    countTask();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: TMAppBar(),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10), // Spacing before header
-            _buildTaskHeader(), // Header section
-            const SizedBox(height: 10), // Spacing after header
-            isLoading
-                ? Center(child: CircularProgressIndicator())
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: taskList.length,
-                      itemBuilder: (context, index) {
-                        return _buildTaskInfo(taskList[index]);
-                      },
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await getNewTask();
+          await countTask();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10), // Spacing before header
+              _buildTaskHeader(), // Header section
+              const SizedBox(height: 10), // Spacing after header
+              isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : Expanded(
+                      child: ListView.builder(
+                        itemCount: taskList.length,
+                        itemBuilder: (context, index) {
+                          return _buildTaskInfo(taskList[index]);
+                        },
+                      ),
                     ),
-                  ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   // Content
-  Widget _buildTaskInfo(TaskList task) {
+  Widget _buildTaskInfo(TaskModel task) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
       child: Container(
@@ -72,15 +82,15 @@ class _TaskScreenState extends State<TaskScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(task.title),
-              Text(task.description),
-              Text("Date: ${task.createdAt}"),
+              Text(task.title ?? ""),
+              Text(task.description ?? ""),
+              Text("Date: ${task.createdDate ?? ""}"),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Chip(label: Text(task.status)),
+                    child: Chip(label: Text(task.status ?? "")),
                   ),
                   Row(
                     children: [
@@ -111,15 +121,25 @@ class _TaskScreenState extends State<TaskScreen> {
 
   // Header widget
   Widget _buildTaskHeader() {
+    // Function to get the count based on the status ID
+    String getCountById(String id) {
+      for (var status in taskStatusList) {
+        if (status.id == id) {
+          return status.sum.toString();
+        }
+      }
+      return "0";
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildTaskStatusCard("09", "New Task"),
-          _buildTaskStatusCard("09", "Completed"),
-          _buildTaskStatusCard("05", "Canceled"),
-          _buildTaskStatusCard("09", "Progress"),
+          _buildTaskStatusCard(getCountById("New"), "New Task"),
+          _buildTaskStatusCard(getCountById("Completed"), "Completed"),
+          _buildTaskStatusCard(getCountById("Canceled"), "Canceled"),
+          _buildTaskStatusCard(getCountById("Progress"), "Progress"),
         ],
       ),
     );
@@ -180,8 +200,8 @@ class _TaskScreenState extends State<TaskScreen> {
                 .map((status) => ListTile(
                       title: Text(status),
                       onTap: () {
-                       updateTask(id, status);
-                       Navigator.pop(context);
+                        updateTask(id, status);
+                        Navigator.pop(context);
                       },
                     ))
                 .toList(),
@@ -202,6 +222,7 @@ class _TaskScreenState extends State<TaskScreen> {
   void _onTabDeleteButton(id) {
     deleteTask(id);
     getNewTask();
+    countTask();
   }
 
   Future<void> deleteTask(id) async {
@@ -229,25 +250,17 @@ class _TaskScreenState extends State<TaskScreen> {
   }
 
   Future<void> getNewTask() async {
+    taskList.clear();
     setState(() {
       isLoading = true;
     });
     NetworkResponse response =
         await ApiClient.getRequest(NetworkURL.listByStatus + "/$_status");
     if (response.isSuccess) {
-      List<dynamic> data = response.data["data"];
-      final tasks = data
-          .map((item) => TaskList(
-                id: item["_id"] ?? "",
-                title: item["title"] ?? "",
-                description: item["description"] ?? "",
-                status: item["status"] ?? "",
-                email: item["email"] ?? "",
-                createdAt: item["createdDate"] ?? "",
-              ))
-          .toList();
+      TaskListModel taskListModel = TaskListModel.fromJson(response.data);
+
       setState(() {
-        taskList = tasks;
+        taskList = taskListModel.taskList ?? [];
         isLoading = false;
       });
     } else {
@@ -257,6 +270,26 @@ class _TaskScreenState extends State<TaskScreen> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> countTask() async {
+    taskStatusList.clear();
+    NetworkResponse response =
+        await ApiClient.getRequest(NetworkURL.taskStatusCountUrl);
+
+    if (response.isSuccess) {
+      Map<String, dynamic> statusList = response.data;
+
+      for (var data in statusList["data"]) {
+        ListOfStatusModel listOfStatusModel =
+            ListOfStatusModel(id: data["_id"], sum: data["sum"]);
+        taskStatusList.add(listOfStatusModel);
+      }
+      setState(() {});
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
     }
   }
 }

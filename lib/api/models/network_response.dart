@@ -4,23 +4,34 @@ class NetworkResponse {
   int statusCode;
   String? isError;
 
-  NetworkResponse(
-      {this.isSuccess = false,
-      this.data,
-      this.statusCode = 200,
-      this.isError = "INTERNAL SERVER ERROR"});
+  NetworkResponse({
+    required this.isSuccess ,
+    this.data,
+    required this.statusCode,
+    this.isError = "INTERNAL SERVER ERROR",
+  });
 
-  factory NetworkResponse.success(
-      {required  dynamic data, statusCode}) {
+  factory NetworkResponse.success({
+    required dynamic data,
+    required int statusCode,
+    required bool isSuccess,
+  }) {
     return NetworkResponse(
-      isSuccess: true,
+      isSuccess: isSuccess,
       data: data,
       statusCode: statusCode,
     );
   }
 
-  factory NetworkResponse.error({required String error, statusCode}) {
+  factory NetworkResponse.error({
+    required String error,
+    required int statusCode,
+    required bool isSuccess, // Defaulting to 500 for server errors
+  }) {
     return NetworkResponse(
-        isSuccess: false, statusCode: statusCode, isError: error);
+      isSuccess: isSuccess,
+      statusCode: statusCode,
+      isError: error,
+    );
   }
 }

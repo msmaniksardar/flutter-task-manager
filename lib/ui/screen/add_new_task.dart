@@ -126,19 +126,12 @@ class _AddNewTaskState extends State<AddNewTask> {
 
     NetworkResponse response =
         await ApiClient.postRequest(NetworkURL.createTaskUrl, requestBody);
-    setState(() {
-      _inProgress = false;
-    });
-    if (response.isSuccess) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Add Task Successfully")));
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => BottomNavigationWidget()),
-          (context) => false);
-    } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+
+    if(response.isSuccess){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("add successfully")));
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.isError.toString())));
     }
+
   }
 }

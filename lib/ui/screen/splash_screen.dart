@@ -24,8 +24,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _moveToNextScreen() async {
     await Future.delayed(const Duration(seconds: 2));
-    await Authentication.getToken();
-    if(Authentication.isLoggedIn()){
+    await AuthController.getAccessToken();
+    if(AuthController.isLoggedIn()){
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => BottomNavigationWidget()));
     }else{

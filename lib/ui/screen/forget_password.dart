@@ -1,5 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:task_manager/api/models/network_response.dart';
+import 'package:task_manager/api/services/api_client.dart';
+import 'package:task_manager/api/utils/urls.dart';
+import 'package:task_manager/ui/screen/pin_verification_screen.dart';
 import 'package:task_manager/ui/screen/sign_in_screen.dart';
 import 'package:task_manager/ui/screen/sign_up_screen.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
@@ -14,7 +18,7 @@ class ForgetPasswordScreen extends StatefulWidget {
 
 class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   final TextEditingController _emailTextEditingController =
-      TextEditingController();
+  TextEditingController();
 
   @override
   void dispose() {
@@ -24,7 +28,9 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final textTheme = Theme
+        .of(context)
+        .textTheme;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -73,7 +79,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
         const SizedBox(height: 20),
         const SizedBox(height: 30),
         ElevatedButton(
-          onPressed: _onTabSignInButton,
+          onPressed: _onTabForgetPasswordButton,
           child: const Icon(
             Icons.arrow_circle_right_outlined,
             color: Colors.white,
@@ -118,6 +124,23 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   }
 
   void _onTabForgetPasswordButton() {
-    // Todo: Handle forget password logic here
+
+    forgetPassword();
+  }
+
+  Future<void> forgetPassword() async {
+    final String email = _emailTextEditingController.text.trim();
+    NetworkResponse response = await ApiClient.getRequest(
+        NetworkURL.tRecoverVerifyEmailUrl +
+            "/${email}");
+    if (response.isSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.data['data'].toString())));
+
+      Navigator.push(context , MaterialPageRoute(builder: (context)=> PinVerificationScreen(email: email,) ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.isError.toString())));
+    }
   }
 }
