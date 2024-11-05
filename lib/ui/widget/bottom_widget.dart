@@ -25,13 +25,7 @@ class _BottomNavigationWidgetState extends State<BottomNavigationWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const AddNewTask()));
-        },
-        child: Icon(Icons.add),
-      ),
+
       body: _screen[currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,

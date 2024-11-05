@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:task_manager/api/controllers/auth_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
+import 'package:task_manager/api/models/user_response_model.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
 import 'package:task_manager/ui/screen/sign_in_screen.dart';
@@ -166,7 +168,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         context, MaterialPageRoute(builder: (context) => const SignInScreen()));
   }
 
-  void signUp() async {
+  Future<void> signUp() async {
     setState(() {
       _isLoading = true; // Start loading
     });
@@ -184,6 +186,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         await ApiClient.postRequest(NetworkURL.registrationUrl, requestBody);
 
     if (networkResponse.isSuccess) {
+
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("User Created Successfully")));
     } else {

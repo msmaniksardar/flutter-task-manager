@@ -1,5 +1,5 @@
 class NetworkURL {
-  static const String baseUrl = "http://152.42.163.176:2006/api/v1";
+  static const String baseUrl = "http://35.73.30.144:2005/api/v1";
   static const String registrationUrl = "$baseUrl/registration";
   static const String loginUrl = "$baseUrl/login";
   static const String listByStatus = "$baseUrl/listTaskByStatus";
@@ -10,4 +10,5 @@ class NetworkURL {
   static const String tRecoverVerifyEmailUrl = "$baseUrl/RecoverVerifyEmail";
   static const String RecoverVerifyOTPUrl = "$baseUrl/RecoverVerifyOTP";
   static const String RecoverResetPassUrl = "$baseUrl/RecoverResetPassword";
+  static const String profileUpdatePassUrl = "$baseUrl/profileUpdate";
 }

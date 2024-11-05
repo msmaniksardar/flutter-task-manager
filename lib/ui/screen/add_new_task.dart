@@ -19,6 +19,7 @@ class _AddNewTaskState extends State<AddNewTask> {
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   bool _inProgress = false;
+  bool _shouldRefreshPreviousPage = false;
 
   @override
   void dispose() {
@@ -33,28 +34,39 @@ class _AddNewTaskState extends State<AddNewTask> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      appBar: TMAppBar(
-        isProfileScreenOpen: true,
-      ),
-      body: BackgroundScreen(
-        child: Padding(
-          padding: const EdgeInsets.all(25),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 100),
-              Text(
-                "Add New Task",
-                style: textTheme.displaySmall?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult:(didPop ,dynamic result){
+        if(didPop){
+          return ;
+        }
+        Navigator.pop(context , _shouldRefreshPreviousPage);;
+
+
+      },
+      child: Scaffold(
+        appBar: TMAppBar(
+          isProfileScreenOpen: true,
+        ),
+        body: BackgroundScreen(
+          child: Padding(
+            padding: const EdgeInsets.all(25),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 100),
+                Text(
+                  "Add New Task",
+                  style: textTheme.displaySmall?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              _buildTaskForm(),
-              const SizedBox(height: 50),
-            ],
+                const SizedBox(height: 20),
+                _buildTaskForm(),
+                const SizedBox(height: 50),
+              ],
+            ),
           ),
         ),
       ),
@@ -128,6 +140,7 @@ class _AddNewTaskState extends State<AddNewTask> {
         await ApiClient.postRequest(NetworkURL.createTaskUrl, requestBody);
 
     if(response.isSuccess){
+      _shouldRefreshPreviousPage = true;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("add successfully")));
     }else{
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.isError.toString())));

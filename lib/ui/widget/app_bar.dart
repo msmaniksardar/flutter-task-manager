@@ -1,13 +1,41 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:task_manager/api/controllers/auth_controller.dart';
+import 'package:task_manager/api/models/user_model.dart';
 import 'package:task_manager/ui/screen/mobile/sign_in_screen_layout.dart';
 import 'package:task_manager/ui/screen/update_profile_screen.dart';
 import '../utility/app_colors.dart';
-
-class TMAppBar extends StatelessWidget implements PreferredSizeWidget {
+import 'package:task_manager/api/controllers/auth_controller.dart';
+class TMAppBar extends StatefulWidget implements PreferredSizeWidget {
   TMAppBar({super.key ,  this.isProfileScreenOpen = false,});
-
   final bool isProfileScreenOpen;
+
+  @override
+  State<TMAppBar> createState() => _TMAppBarState();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
+}
+
+class _TMAppBarState extends State<TMAppBar> {
+
+  UserModel? userModel;
+  Uint8List decodedBytes = base64Decode(AuthController.userData!.photo.toString());
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+      loadUserData();
+  }
+
+
+  Future<void> loadUserData() async {
+    userModel = await AuthController.getUserData();
+    await AuthController.userData;
+    setState(() {}); // Trigger a rebuild to show the updated user data
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +47,7 @@ class TMAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: IconButton(
             onPressed: ()async {
 
-              await AuthController.clearUserData();
+              await AuthController.clearAccessToken();
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => SignInScreenLayout()),
@@ -32,29 +60,31 @@ class TMAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ],
       title: GestureDetector(
-        onTap: () {
-          if (isProfileScreenOpen) {
+        onTap: ()async {
+          if (widget.isProfileScreenOpen) {
             return;
           }
-          Navigator.push(
+        bool result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => UpdateProfileScreen()),);
+          if( result == false){
+           await loadUserData();
+          }
         },
         child: Row(
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
-                backgroundColor: Colors.white,
-                radius: 20,
+                backgroundImage: Image.memory(decodedBytes).image,
               ),
             ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children:  [
                   Text(
-                    "Manik Sardar",
+                    AuthController.userData?.firstName ?? "",
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -62,7 +92,7 @@ class TMAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                   Text(
-                    "anonymousmanik@gmail.com",
+                    AuthController.userData?.email ?? "",
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -78,6 +108,5 @@ class TMAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  @override
-  Size get preferredSize => const Size.fromHeight(56);
+
 }

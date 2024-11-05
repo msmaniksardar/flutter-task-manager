@@ -1,13 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:task_manager/api/controllers/auth_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
+import 'package:task_manager/api/models/user_response_model.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
 import 'package:task_manager/ui/screen/forget_password.dart';
 import 'package:task_manager/ui/screen/sign_up_screen.dart';
-import 'package:task_manager/ui/screen/task_screen.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
-import 'package:task_manager/ui/widget/app_bar.dart';
 import 'package:task_manager/ui/widget/background_screen.dart';
 import 'package:task_manager/ui/widget/bottom_widget.dart';
 
@@ -69,15 +71,18 @@ class _SignInScreenState extends State<SignInScreen> {
           _buildTextFormField(
               _emailTextEditingController, "Email", "Email is required"),
           const SizedBox(height: 20),
-          _buildTextFormField(
-              _passwordTextEditingController, "Password", "Password is required" , obscureText: true),
+          _buildTextFormField(_passwordTextEditingController, "Password",
+              "Password is required",
+              obscureText: true),
           const SizedBox(height: 30),
           ElevatedButton(
             onPressed: _onTabSignInButton,
-            child: _inProgress ? CircularProgressIndicator() : const Icon(
-              Icons.arrow_circle_right_outlined,
-              color: Colors.white,
-            ),
+            child: _inProgress
+                ? CircularProgressIndicator()
+                : const Icon(
+                    Icons.arrow_circle_right_outlined,
+                    color: Colors.white,
+                  ),
           ),
         ],
       ),
@@ -143,51 +148,54 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _onTabSignInButton() {
-
-    if(_formKey.currentState!.validate()){
+    if (_formKey.currentState!.validate()) {
       signIn();
-
     }
-
-
   }
 
-
-  void signIn()async{
-     setState(() {
-       _inProgress = true;
-     });
-    Map<String , dynamic> _requestBody = {
-      "email":_emailTextEditingController.text.trim(),
-      "password":_passwordTextEditingController.text
+  Future<void> signIn() async {
+    setState(() {
+      _inProgress = true;
+    });
+    Map<String, dynamic> _requestBody = {
+      "email": _emailTextEditingController.text.trim(),
+      "password": _passwordTextEditingController.text
     };
 
-    NetworkResponse response = await ApiClient.postRequest(NetworkURL.loginUrl,_requestBody);
-  print(NetworkURL.loginUrl );
+    NetworkResponse response =
+        await ApiClient.postRequest(NetworkURL.loginUrl, _requestBody);
+    print(NetworkURL.loginUrl);
     setState(() {
       _inProgress = false;
     });
-    if(response.isSuccess){
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Login SuccessFull")));
+    if (response.isSuccess) {
+      print(response.data);
+
+        UserResponseModel userResponseModel = UserResponseModel.fromJson(response.data);
+
+      await AuthController.saveUserData(userResponseModel.data);
+      await AuthController.saveAccessToken(userResponseModel.token!);
+
+      print(response.data);
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Login SuccessFull")));
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => BottomNavigationWidget()),
-              (context) => false);
-    }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.isError.toString())));
+          (context) => false);
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.isSuccess.toString())));
     }
-
-
-
   }
 
-
   void _onTabForgetPasswordButton() {
-      Navigator.push(context, MaterialPageRoute(builder: (context)=> const ForgetPasswordScreen()));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const ForgetPasswordScreen()));
   }
 
   void _onTabSignUpButton() {
-
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => SignUpScreen()));
   }

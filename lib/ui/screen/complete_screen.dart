@@ -5,6 +5,7 @@ import 'package:task_manager/api/models/task_list_model.dart';
 import 'package:task_manager/api/models/task_model.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
+import 'package:task_manager/ui/screen/add_new_task.dart';
 import 'package:task_manager/ui/widget/app_bar.dart';
 
 class CompleteScreen extends StatefulWidget {
@@ -36,27 +37,44 @@ class _CompleteScreenState extends State<CompleteScreen> {
           await getNewTask();
           await countTask();
         },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10), // Spacing before header
-              _buildTaskHeader(), // Header section
-              const SizedBox(height: 10), // Spacing after header
-              isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : Expanded(
-                child: ListView.builder(
-                  itemCount: taskList.length,
-                  itemBuilder: (context, index) {
-                    return _buildTaskInfo(taskList[index]);
-                  },
+        child: Visibility(
+          visible: !isLoading,
+          replacement: Center(child: CircularProgressIndicator(),),
+
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10), // Spacing before header
+                _buildTaskHeader(), // Header section
+                const SizedBox(height: 10), // Spacing after header
+                isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : Expanded(
+                  child: ListView.builder(
+                    itemCount: taskList.length,
+                    itemBuilder: (context, index) {
+                      return _buildTaskInfo(taskList[index]);
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: ()async {
+          final bool result = await  Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const AddNewTask()));
+          if(result == true){
+            getNewTask();
+            countTask();
+          }
+          print("navigation page route : ${result}");
+        },
+        child: Icon(Icons.add),
       ),
     );
   }
