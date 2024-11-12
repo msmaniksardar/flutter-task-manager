@@ -2,14 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:task_manager/api/controllers/auth_controller.dart';
-import 'package:task_manager/api/controllers/sign_in_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/models/user_response_model.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
-import 'package:task_manager/ui/routes/route.dart';
 import 'package:task_manager/ui/screen/forget_password.dart';
 import 'package:task_manager/ui/screen/sign_up_screen.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
@@ -157,11 +154,30 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> signIn() async {
-    bool result = await Get.find<SignInController>().signIn(
-        email: _emailTextEditingController.text.trim(),
-        password: _passwordTextEditingController.text);
+    setState(() {
+      _inProgress = true;
+    });
+    Map<String, dynamic> _requestBody = {
+      "email": _emailTextEditingController.text.trim(),
+      "password": _passwordTextEditingController.text
+    };
 
-    if (result) {
+    NetworkResponse response =
+        await ApiClient.postRequest(NetworkURL.loginUrl, _requestBody);
+    print(NetworkURL.loginUrl);
+    setState(() {
+      _inProgress = false;
+    });
+    if (response.isSuccess) {
+      print(response.data);
+
+        UserResponseModel userResponseModel = UserResponseModel.fromJson(response.data);
+
+      await AuthController.saveUserData(userResponseModel.data);
+      await AuthController.saveAccessToken(userResponseModel.token!);
+
+      print(response.data);
+
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Login SuccessFull")));
       Navigator.pushAndRemoveUntil(
@@ -170,16 +186,18 @@ class _SignInScreenState extends State<SignInScreen> {
           (context) => false);
     } else {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text( Get.find<SignInController>().errorMessage.toString())));
+          .showSnackBar(SnackBar(content: Text(response.isSuccess.toString())));
     }
   }
 
   void _onTabForgetPasswordButton() {
-    Get.toNamed(forgetPassword);
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const ForgetPasswordScreen()));
   }
 
   void _onTabSignUpButton() {
-    Get.toNamed(signUp);
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => SignUpScreen()));
   }
 
   @override

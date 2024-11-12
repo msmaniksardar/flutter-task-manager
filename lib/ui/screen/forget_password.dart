@@ -1,10 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
-import 'package:task_manager/ui/routes/route.dart';
 import 'package:task_manager/ui/screen/pin_verification_screen.dart';
 import 'package:task_manager/ui/screen/sign_in_screen.dart';
 import 'package:task_manager/ui/screen/sign_up_screen.dart';
@@ -139,8 +137,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response.data['data'].toString())));
 
-        Get.toNamed(pinVerify , arguments: {"email":email });
-    //  Navigator.push(context , MaterialPageRoute(builder: (context)=> PinVerificationScreen(email: email,) ));
+      Navigator.push(context , MaterialPageRoute(builder: (context)=> PinVerificationScreen(email: email,) ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response.isError.toString())));

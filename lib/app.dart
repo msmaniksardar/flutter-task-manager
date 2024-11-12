@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:task_manager/api/controllers/bind_controller.dart';
-import 'package:task_manager/ui/routes/route.dart';
 import 'package:task_manager/ui/screen/add_new_task.dart';
 import 'package:task_manager/ui/screen/forget_password.dart';
 import 'package:task_manager/ui/screen/mobile/sign_in_screen_layout.dart';
@@ -19,13 +16,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    return MaterialApp(
       navigatorKey: MyApp.navigatorKey,
       home: SplashScreen(),
       theme: lightTheme,
-      initialRoute: splash,
-      getPages: getPage,
-      initialBinding: BindController(),
       debugShowCheckedModeBanner: false,
     );
   }

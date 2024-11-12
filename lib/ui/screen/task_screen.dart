@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:task_manager/api/controllers/count_controller.dart';
-import 'package:task_manager/api/controllers/task_controller.dart';
 import 'package:task_manager/api/models/list_of_status_model.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/models/task_list_model.dart';
@@ -20,7 +17,9 @@ class TaskScreen extends StatefulWidget {
 
 class _TaskScreenState extends State<TaskScreen> {
   String _status = "New";
-  final countController = Get.find<CountController>();
+  bool isLoading = false;
+  List<TaskModel> taskList = [];
+  List<ListOfStatusModel> taskStatusList = [];
 
   @override
   void initState() {
@@ -38,8 +37,8 @@ class _TaskScreenState extends State<TaskScreen> {
           await getNewTask();
           await countTask();
         },
-        child: Obx(()=>Visibility(
-          visible: Get.find<TaskController>().inProgress.value == false,
+        child: Visibility(
+          visible: !isLoading,
           replacement: Center(child: CircularProgressIndicator(),),
 
           child: Padding(
@@ -48,22 +47,22 @@ class _TaskScreenState extends State<TaskScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10), // Spacing before header
-               Obx(()=> _buildTaskHeader()), // Header section
+                _buildTaskHeader(), // Header section
                 const SizedBox(height: 10), // Spacing after header
-                Get.find<TaskController>().inProgress.value
+                isLoading
                     ? Center(child: CircularProgressIndicator())
                     : Expanded(
-                  child: ListView.builder(
-                    itemCount: Get.find<TaskController>().taskList.length,
-                    itemBuilder: (context, index) {
-                      return _buildTaskInfo(Get.find<TaskController>().taskList[index]);
-                    },
-                  ),
-                ),
+                        child: ListView.builder(
+                          itemCount: taskList.length,
+                          itemBuilder: (context, index) {
+                            return _buildTaskInfo(taskList[index]);
+                          },
+                        ),
+                      ),
               ],
             ),
           ),
-        )),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: ()async {
@@ -141,7 +140,7 @@ class _TaskScreenState extends State<TaskScreen> {
 
   Widget _buildTaskHeader() {
 
-    final taskList = countController.taskStatusList.map((status)=>
+    final taskList = taskStatusList.map((status)=>
       _buildTaskStatusCard(count: status.sum.toString(), label: status.id.toString())
       ).toList();
 
@@ -259,16 +258,46 @@ class _TaskScreenState extends State<TaskScreen> {
   }
 
   Future<void> getNewTask() async {
-      bool result = await Get.find<TaskController>().getTask(status: _status);
-    if (result ==  false) {
-      Get.snackbar("error",  Get.find<TaskController>().errorMessage.toString());
+    taskList.clear();
+    setState(() {
+      isLoading = true;
+    });
+    NetworkResponse response =
+        await ApiClient.getRequest(NetworkURL.listByStatus + "/$_status");
+    if (response.isSuccess) {
+      TaskListModel taskListModel = TaskListModel.fromJson(response.data);
+
+      setState(() {
+        taskList = taskListModel.taskList ?? [];
+        isLoading = false;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.isError.toString())),
+      );
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
   Future<void> countTask() async {
-      bool result = await countController.countTask();
-      if(result == false){
-        Get.snackbar("error", countController.errorMessage.toString());
+    taskStatusList.clear();
+    NetworkResponse response =
+        await ApiClient.getRequest(NetworkURL.taskStatusCountUrl);
+
+    if (response.isSuccess) {
+      Map<String, dynamic> statusList = response.data;
+
+      for (var data in statusList["data"]) {
+        ListOfStatusModel listOfStatusModel =
+            ListOfStatusModel(id: data["_id"], sum: data["sum"]);
+        taskStatusList.add(listOfStatusModel);
       }
+      setState(() {});
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+    }
   }
 }

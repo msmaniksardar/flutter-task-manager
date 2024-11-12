@@ -5,7 +5,7 @@ class NetworkResponse {
   String? isError;
 
   NetworkResponse({
-    required this.isSuccess,
+    required this.isSuccess ,
     this.data,
     required this.statusCode,
     this.isError = "INTERNAL SERVER ERROR",
