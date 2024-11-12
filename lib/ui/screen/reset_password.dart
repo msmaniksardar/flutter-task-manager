@@ -1,20 +1,14 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
-import 'package:task_manager/ui/screen/sign_in_screen.dart';
+import 'package:task_manager/ui/routes/route.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
 import 'package:task_manager/ui/widget/background_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen(
-      {super.key, required this.otp, required this.email});
-
-  final dynamic otp;
-
-  final dynamic email;
-
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
@@ -24,6 +18,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       TextEditingController();
   final TextEditingController _confirmPasswordTextEditingController =
       TextEditingController();
+
+  final _otp = Get.arguments["otp"];
+  final _email =Get.arguments["email"];
 
   @override
   void dispose() {
@@ -35,8 +32,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    print("Email From PIN: ${widget.email}");
-    print("Email From PIN: ${widget.otp}");
+    print("Email From PIN: ${_email}");
+    print("Email From PIN: ${_otp}");
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -135,16 +132,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Password Does Not Match")),
       );
-    }else{
+    } else {
       reset();
     }
-
   }
 
   Future<void> reset() async {
     Map<String, dynamic> requestBody = {
-      "email": widget.email,
-      "OTP": widget.otp,
+      "email": _email,
+      "OTP": _otp,
       "password": _passwordTextEditingController.text
     };
 
@@ -153,7 +149,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (response.isSuccess) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(response.data["data"])));
-      Navigator.push(context , MaterialPageRoute(builder: (context)=> const SignInScreen()));
+      Get.toNamed(login);
     } else {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(response.isError.toString())));
@@ -161,10 +157,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   void _onTabSignInButton() {
-    // Todo: Handle forget password logic here
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SignInScreen()),
-    );
+    Get.toNamed(login);
   }
 }

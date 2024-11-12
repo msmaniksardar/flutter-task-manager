@@ -1,9 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
+import 'package:task_manager/ui/routes/route.dart';
 import 'package:task_manager/ui/screen/reset_password.dart';
 import 'package:task_manager/ui/screen/sign_in_screen.dart';
 import 'package:task_manager/ui/screen/sign_up_screen.dart';
@@ -11,9 +13,7 @@ import 'package:task_manager/ui/utility/app_colors.dart';
 import 'package:task_manager/ui/widget/background_screen.dart';
 
 class PinVerificationScreen extends StatefulWidget {
-  const PinVerificationScreen({super.key, required this.email});
-
-  final dynamic email;
+  const PinVerificationScreen({super.key});
 
   @override
   State<PinVerificationScreen> createState() => _PinVerificationScreenState();
@@ -23,9 +23,12 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
   final TextEditingController _otpTextEditingController =
       TextEditingController();
 
+  final email = Get.arguments["email"];
+
   @override
   Widget build(BuildContext context) {
-    print("email ${widget.email}");
+    print("Email Form Get : $email");
+    // print("email ${widget.email}");
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -136,17 +139,19 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
   Future<void> verifyCode() async {
     final otp = _otpTextEditingController.text.trim();
     NetworkResponse response = await ApiClient.getRequest(
-        NetworkURL.RecoverVerifyOTPUrl + "/${widget.email}/${otp}");
+        NetworkURL.RecoverVerifyOTPUrl + "/${email}/${otp}");
     if (response.isSuccess) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(response.data["data"])));
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => ResetPasswordScreen(
-                    otp: otp,
-                    email: widget.email,
-                  )));
+
+      Get.toNamed(resetPassword, arguments: {"otp": otp, "email": email});
+      // Navigator.push(
+      //     context,
+      //     MaterialPageRoute(
+      //         builder: (context) => ResetPasswordScreen(
+      //               otp: otp,
+      //               email:email,
+      //             )));
     } else {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(response.isError.toString())));
