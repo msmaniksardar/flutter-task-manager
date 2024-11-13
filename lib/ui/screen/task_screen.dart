@@ -209,6 +209,8 @@ class _TaskScreenState extends State<TaskScreen> {
                       title: Text(status),
                       onTap: () {
                         updateTask(id, status);
+                        getNewTask();
+                        countTask();
                         Navigator.pop(context);
                       },
                     ))
