@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/models/task_list_model.dart';
@@ -11,16 +12,16 @@ class TaskController extends GetxController {
   final RxString _errorMessage = ''.obs;
   final RxList<TaskModel> taskList = <TaskModel>[].obs;
 
-
   RxString get errorMessage => _errorMessage;
+
   RxBool get inProgress => _inProgress;
+
   RxBool get isSuccess => _isSuccess;
 
   Future<bool> getTask({String? status}) async {
     taskList.clear();
     _isSuccess.value = false;
     _inProgress.value = true;
-
 
     NetworkResponse response = await ApiClient.getRequest(
       NetworkURL.listByStatus + "/$status",
@@ -39,8 +40,92 @@ class TaskController extends GetxController {
     return _isSuccess.value;
   }
 
+  Future<bool> deleteTask(id) async {
+    _isSuccess.value = false;
+    _inProgress.value = true;
+    NetworkResponse response =
+        await ApiClient.getRequest(NetworkURL.deleteTaskUrl + "/${id}");
+    if (response.isSuccess) {
+      _isSuccess.value = true;
+    } else {
+      _errorMessage.value = response.isError.toString();
+    }
+
+    _inProgress.value = false;
+    return _isSuccess.value;
+  }
+
+  Future<bool> updateTask(id, status) async {
+    _isSuccess.value = false;
+    _inProgress.value = true;
+    NetworkResponse response = await ApiClient.getRequest(
+        NetworkURL.updateTaskStatusUrl + "/${id}/${status}");
+    if (response.isSuccess) {
+      _isSuccess.value = true;
+    } else {
+      _errorMessage.value = response.isError.toString();
+    }
+    inProgress.value = false;
+    return _isSuccess.value;
+  }
+
+  Future<bool> addTask(requestBody) async {
+    _isSuccess.value = false;
+    _inProgress.value = true;
+    NetworkResponse response =
+        await ApiClient.postRequest(NetworkURL.createTaskUrl, requestBody);
+
+    if (response.isSuccess) {
+      _isSuccess.value = true;
+    } else {
+      _errorMessage.value = response.isError.toString();
+    }
+    _inProgress.value = false;
+    return _isSuccess.value;
+  }
+
+  Future<bool> reset(requestBody) async {
+    _isSuccess.value = false;
+    _inProgress.value = true;
+    NetworkResponse response = await ApiClient.postRequest(
+        NetworkURL.RecoverResetPassUrl, requestBody);
+    if (response.isSuccess) {
+      _isSuccess.value = true;
+    } else {
+      _errorMessage.value = response.isError.toString();
+    }
+
+    _inProgress.value = false;
+    return _isSuccess.value;
+  }
+
+  Future<bool> forgetPassword(email) async {
+    _isSuccess.value = false;
+    _inProgress.value = true;
+    NetworkResponse response = await ApiClient.getRequest(
+        NetworkURL.tRecoverVerifyEmailUrl + "/${email}");
+    if (response.isSuccess) {
+      _isSuccess.value = true;
+    } else {
+      _errorMessage.value = response.isError.toString();
+    }
+    _inProgress.value = false;
+    return _isSuccess.value;
+  }
+
+  Future<bool> verifyCode(otp, email) async {
+    _isSuccess.value = false;
+    _inProgress.value = true;
+    NetworkResponse response = await ApiClient.getRequest(
+        NetworkURL.RecoverVerifyOTPUrl + "/${email}/${otp}");
+    if (response.isSuccess) {
+      _isSuccess.value = true;
+    } else {
+      _errorMessage.value = response.isError.toString();
+    }
 
 
-
-
+    _inProgress.value = false;
+    return _isSuccess.value;
+  }
 }

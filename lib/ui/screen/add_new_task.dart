@@ -1,5 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:task_manager/api/controllers/task_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
@@ -18,8 +20,8 @@ class AddNewTask extends StatefulWidget {
 class _AddNewTaskState extends State<AddNewTask> {
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  bool _inProgress = false;
   bool _shouldRefreshPreviousPage = false;
+  final taskController = Get.find<TaskController>();
 
   @override
   void dispose() {
@@ -36,13 +38,11 @@ class _AddNewTaskState extends State<AddNewTask> {
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult:(didPop ,dynamic result){
-        if(didPop){
-          return ;
+      onPopInvokedWithResult: (didPop, dynamic result) {
+        if (didPop) {
+          return;
         }
-        Navigator.pop(context , _shouldRefreshPreviousPage);;
-
-
+        Get.back(result: _shouldRefreshPreviousPage);
       },
       child: Scaffold(
         appBar: TMAppBar(
@@ -107,13 +107,19 @@ class _AddNewTaskState extends State<AddNewTask> {
             },
           ),
           const SizedBox(height: 30),
-          ElevatedButton(
-            onPressed: _onAddTaskPressed,
-            child: const Icon(
-              Icons.arrow_circle_right_outlined,
-              color: Colors.white,
-            ),
-          ),
+          Obx(() => Visibility(
+                visible: taskController.inProgress.value == false,
+                replacement: Center(
+                  child: CircularProgressIndicator(),
+                ),
+                child: ElevatedButton(
+                  onPressed: _onAddTaskPressed,
+                  child: const Icon(
+                    Icons.arrow_circle_right_outlined,
+                    color: Colors.white,
+                  ),
+                ),
+              )),
         ],
       ),
     );
@@ -126,25 +132,18 @@ class _AddNewTaskState extends State<AddNewTask> {
   }
 
   Future<void> addTask() async {
-    setState(() {
-      _inProgress = true;
-    });
-
     final Map<String, dynamic> requestBody = {
       "title": _subjectController.text,
       "description": _descriptionController.text,
       "status": "New",
     };
 
-    NetworkResponse response =
-        await ApiClient.postRequest(NetworkURL.createTaskUrl, requestBody);
-
-    if(response.isSuccess){
+    bool result = await taskController.addTask(requestBody);
+    if (result) {
       _shouldRefreshPreviousPage = true;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("add successfully")));
-    }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.isError.toString())));
+      Get.snackbar("Task", "Task Add Successfully");
+    } else {
+      Get.snackbar("error", taskController.errorMessage.toString());
     }
-
   }
 }

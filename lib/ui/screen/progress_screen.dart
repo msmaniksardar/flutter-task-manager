@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:task_manager/api/models/list_of_status_model.dart';
-import 'package:task_manager/api/models/network_response.dart';
-import 'package:task_manager/api/models/task_list_model.dart';
+import 'package:get/get.dart';
+import 'package:task_manager/api/controllers/count_controller.dart';
+import 'package:task_manager/api/controllers/task_controller.dart';
 import 'package:task_manager/api/models/task_model.dart';
-import 'package:task_manager/api/services/api_client.dart';
-import 'package:task_manager/api/utils/urls.dart';
+import 'package:task_manager/ui/routes/route.dart';
 import 'package:task_manager/ui/screen/add_new_task.dart';
 import 'package:task_manager/ui/widget/app_bar.dart';
 
@@ -17,9 +16,8 @@ class ProgressScreen extends StatefulWidget {
 
 class _ProgressScreenState extends State<ProgressScreen> {
   String _status = "Progress";
-  bool isLoading = false;
-  List<TaskModel> taskList = [];
-  List<ListOfStatusModel> taskStatusList = [];
+  final countController = Get.find<CountController>();
+  final taskController = Get.find<TaskController>();
 
   @override
   void initState() {
@@ -37,42 +35,43 @@ class _ProgressScreenState extends State<ProgressScreen> {
           await getNewTask();
           await countTask();
         },
-        child: Visibility(
-          visible: !isLoading,
-          replacement: Center(child: CircularProgressIndicator(),),
-
+        child: Obx(() => Visibility(
+          visible: Get.find<TaskController>().inProgress.value == false,
+          replacement: Center(
+            child: CircularProgressIndicator(),
+          ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10), // Spacing before header
-                _buildTaskHeader(), // Header section
+                Obx(() => _buildTaskHeader()), // Header section
                 const SizedBox(height: 10), // Spacing after header
-                isLoading
+                Get.find<TaskController>().inProgress.value
                     ? Center(child: CircularProgressIndicator())
                     : Expanded(
                   child: ListView.builder(
-                    itemCount: taskList.length,
+                    itemCount:
+                    Get.find<TaskController>().taskList.length,
                     itemBuilder: (context, index) {
-                      return _buildTaskInfo(taskList[index]);
+                      return _buildTaskInfo(
+                          Get.find<TaskController>().taskList[index]);
                     },
                   ),
                 ),
               ],
             ),
           ),
-        ),
+        )),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: ()async {
-          final bool result = await  Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const AddNewTask()));
-          if(result == true){
+        onPressed: () async {
+          final bool result = await Get.toNamed(addNewTask);
+          if (result == true) {
             getNewTask();
             countTask();
           }
-          print("navigation page route : ${result}");
         },
         child: Icon(Icons.add),
       ),
@@ -137,34 +136,23 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 
-  // Header widget
   Widget _buildTaskHeader() {
-    // Function to get the count based on the status ID
-    String getCountById(String id) {
-      for (var status in taskStatusList) {
-        if (status.id == id) {
-          return status.sum.toString();
-        }
-      }
-      return "0";
-    }
+    final taskList = countController.taskStatusList
+        .map((status) => _buildTaskStatusCard(
+        count: status.sum.toString(), label: status.id.toString()))
+        .toList();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildTaskStatusCard(getCountById("New"), "New Task"),
-          _buildTaskStatusCard(getCountById("Completed"), "Completed"),
-          _buildTaskStatusCard(getCountById("Canceled"), "Canceled"),
-          _buildTaskStatusCard(getCountById("Progress"), "Progress"),
-        ],
+        children: taskList,
       ),
     );
   }
 
   // Widget for each status card
-  Widget _buildTaskStatusCard(String count, String label) {
+  Widget _buildTaskStatusCard({required String count, required String label}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Container(
@@ -219,7 +207,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               title: Text(status),
               onTap: () {
                 updateTask(id, status);
-                Navigator.pop(context);
+                Get.back();
               },
             ))
                 .toList(),
@@ -227,7 +215,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Get.back();
               },
               child: Chip(label: Text("Cancel")),
             ),
@@ -244,70 +232,34 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Future<void> deleteTask(id) async {
-    NetworkResponse response =
-    await ApiClient.getRequest(NetworkURL.deleteTaskUrl + "/${id}");
-    if (response.isSuccess) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Task Delete Successfully")));
+    bool result = await taskController.deleteTask(id);
+    if (result) {
+      Get.snackbar("Message", "Task Delete successfully");
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+      Get.snackbar("Message", taskController.errorMessage.toString());
     }
   }
 
   Future<void> updateTask(id, status) async {
-    NetworkResponse response = await ApiClient.getRequest(
-        NetworkURL.updateTaskStatusUrl + "/${id}/${status}");
-    if (response.isSuccess) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Status Update Successfully")));
+    bool result = await taskController.updateTask(id, status);
+    if (result) {
+      Get.snackbar("Message", " Task Update Successfully");
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+      Get.snackbar("Error", taskController.errorMessage.toString());
     }
   }
 
   Future<void> getNewTask() async {
-    taskList.clear();
-    setState(() {
-      isLoading = true;
-    });
-    NetworkResponse response =
-    await ApiClient.getRequest(NetworkURL.listByStatus + "/$_status");
-    if (response.isSuccess) {
-      TaskListModel taskListModel = TaskListModel.fromJson(response.data);
-
-      setState(() {
-        taskList = taskListModel.taskList ?? [];
-        isLoading = false;
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.isError.toString())),
-      );
-      setState(() {
-        isLoading = false;
-      });
+    bool result = await taskController.getTask(status: _status);
+    if (result == false) {
+      Get.snackbar("error", taskController.errorMessage.toString());
     }
   }
 
   Future<void> countTask() async {
-    taskStatusList.clear();
-    NetworkResponse response =
-    await ApiClient.getRequest(NetworkURL.taskStatusCountUrl);
-
-    if (response.isSuccess) {
-      Map<String, dynamic> statusList = response.data;
-
-      for (var data in statusList["data"]) {
-        ListOfStatusModel listOfStatusModel =
-        ListOfStatusModel(id: data["_id"], sum: data["sum"]);
-        taskStatusList.add(listOfStatusModel);
-      }
-      setState(() {});
-    } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+    bool result = await countController.countTask();
+    if (result == false) {
+      Get.snackbar("error", countController.errorMessage.toString());
     }
   }
 }

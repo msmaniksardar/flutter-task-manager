@@ -1,9 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task_manager/api/models/network_response.dart';
-import 'package:task_manager/api/services/api_client.dart';
-import 'package:task_manager/api/utils/urls.dart';
+import 'package:task_manager/api/controllers/task_controller.dart';
 import 'package:task_manager/ui/routes/route.dart';
 import 'package:task_manager/ui/utility/app_colors.dart';
 import 'package:task_manager/ui/widget/background_screen.dart';
@@ -20,7 +18,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       TextEditingController();
 
   final _otp = Get.arguments["otp"];
-  final _email =Get.arguments["email"];
+  final _email = Get.arguments["email"];
+  final taskController = Get.find<TaskController>();
 
   @override
   void dispose() {
@@ -129,9 +128,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   void _onTabResetPasswordButton() {
     if (_passwordTextEditingController.text !=
         _confirmPasswordTextEditingController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Password Does Not Match")),
-      );
+      Get.snackbar("message", "Password Does Not Match");
     } else {
       reset();
     }
@@ -144,15 +141,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       "password": _passwordTextEditingController.text
     };
 
-    NetworkResponse response = await ApiClient.postRequest(
-        NetworkURL.RecoverResetPassUrl, requestBody);
-    if (response.isSuccess) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.data["data"])));
+    final bool result = await taskController.reset(requestBody);
+    if (result) {
+      Get.snackbar("message", "Password Reset Successfully");
       Get.toNamed(login);
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+      Get.snackbar("error", taskController.errorMessage.toString());
     }
   }
 

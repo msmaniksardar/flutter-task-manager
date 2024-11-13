@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:task_manager/api/controllers/task_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
@@ -24,6 +25,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
       TextEditingController();
 
   final email = Get.arguments["email"];
+  final taskController = Get.find<TaskController>();
 
   @override
   Widget build(BuildContext context) {
@@ -138,23 +140,14 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
 
   Future<void> verifyCode() async {
     final otp = _otpTextEditingController.text.trim();
-    NetworkResponse response = await ApiClient.getRequest(
-        NetworkURL.RecoverVerifyOTPUrl + "/${email}/${otp}");
-    if (response.isSuccess) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.data["data"])));
 
+    final bool result  = await taskController.verifyCode(otp, email);
+
+    if (result) {
+      Get.snackbar("message", "Successfully Verify Code");
       Get.toNamed(resetPassword, arguments: {"otp": otp, "email": email});
-      // Navigator.push(
-      //     context,
-      //     MaterialPageRoute(
-      //         builder: (context) => ResetPasswordScreen(
-      //               otp: otp,
-      //               email:email,
-      //             )));
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.isError.toString())));
+      Get.snackbar("message", taskController.errorMessage.toString());
     }
   }
 

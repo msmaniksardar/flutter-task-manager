@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task_manager/api/controllers/task_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
@@ -21,6 +22,7 @@ class ForgetPasswordScreen extends StatefulWidget {
 class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   final TextEditingController _emailTextEditingController =
   TextEditingController();
+  final taskController = Get.find<TaskController>();
 
   @override
   void dispose() {
@@ -132,18 +134,12 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
 
   Future<void> forgetPassword() async {
     final String email = _emailTextEditingController.text.trim();
-    NetworkResponse response = await ApiClient.getRequest(
-        NetworkURL.tRecoverVerifyEmailUrl +
-            "/${email}");
-    if (response.isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response.data['data'].toString())));
-
-        Get.toNamed(pinVerify , arguments: {"email":email });
-    //  Navigator.push(context , MaterialPageRoute(builder: (context)=> PinVerificationScreen(email: email,) ));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response.isError.toString())));
+    final bool result = await taskController.forgetPassword(email);
+    if(result){
+      Get.snackbar("message", "Check Your Email Address");
+      Get.toNamed(pinVerify , arguments: {"email":email});
+    }else{
+      Get.snackbar("error", taskController.errorMessage.toString());
     }
   }
 }
