@@ -84,7 +84,7 @@ class _TMAppBarState extends State<TMAppBar> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children:  [
                   Text(
-                    AuthController.userData?.firstName ?? "",
+                    AuthController.userData?.fullName ?? "",
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
