@@ -8,6 +8,7 @@ class UserModel {
   String? photo;
   String? createdDate;
 
+
   String get fullName => "${firstName} ${lastName}";
 
   UserModel(

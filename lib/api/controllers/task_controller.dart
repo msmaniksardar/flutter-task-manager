@@ -1,10 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:task_manager/api/controllers/auth_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/models/task_list_model.dart';
 import 'package:task_manager/api/models/task_model.dart';
+import 'package:task_manager/api/models/user_model.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
+
+
+final authController = Get.find<AuthController>();
 
 class TaskController extends GetxController {
   final RxBool _inProgress = false.obs;
@@ -124,7 +129,24 @@ class TaskController extends GetxController {
       _errorMessage.value = response.isError.toString();
     }
 
+    _inProgress.value = false;
+    return _isSuccess.value;
+  }
 
+  Future<bool> updateProfile(requestBody) async {
+    _isSuccess.value = false;
+    _inProgress.value = true;
+
+    NetworkResponse response = await ApiClient.postRequest(
+        NetworkURL.profileUpdatePassUrl, requestBody);
+    if (response.isSuccess) {
+      UserModel userModel = UserModel.fromJson(requestBody);
+      print(requestBody);
+      await authController.saveUserData(userModel);
+      _isSuccess.value = true;
+    } else {
+      _errorMessage.value = response.isError.toString();
+    }
     _inProgress.value = false;
     return _isSuccess.value;
   }

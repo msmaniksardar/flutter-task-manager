@@ -10,6 +10,7 @@ import 'package:task_manager/ui/screen/sign_in_screen.dart';
 import 'package:task_manager/ui/screen/sign_up_screen.dart';
 import 'package:task_manager/ui/screen/splash_screen.dart';
 import 'package:task_manager/ui/screen/task_screen.dart';
+import 'package:task_manager/ui/widget/bottom_widget.dart';
 
 const String splash = "/";
 const String login = "/login";
@@ -23,7 +24,7 @@ const String addNewTask = "/add-new-task";
 const String cancelTask = "/cancel-task";
 const String progressTask = "/progress-task";
 const String completeTask = "/completed-task";
-
+const String bottomNavigation = "/bottomNavigation";
 
 List<GetPage> getPage = [
   GetPage(name: splash, page: () => SplashScreen()),
@@ -35,6 +36,7 @@ List<GetPage> getPage = [
   GetPage(name: progressTask, page: () => ProgressScreen()),
   GetPage(name: completeTask, page: () => CompleteScreen()),
   GetPage(name: forgetPassword, page: () => ForgetPasswordScreen()),
-  GetPage(name: pinVerify, page:()=> PinVerificationScreen()),
-  GetPage(name: resetPassword, page: ()=> ResetPasswordScreen())
+  GetPage(name: pinVerify, page: () => PinVerificationScreen()),
+  GetPage(name: resetPassword, page: () => ResetPasswordScreen()),
+  GetPage(name: bottomNavigation, page: () => BottomNavigationWidget())
 ];

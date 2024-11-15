@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_manager/api/controllers/auth_controller.dart';
+import 'package:task_manager/api/controllers/task_controller.dart';
 import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/models/user_model.dart';
 import 'package:task_manager/api/models/user_response_model.dart';
@@ -31,8 +33,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   XFile? _selectedImage;
+  final taskController = Get.find<TaskController>();
+  final authController = Get.find<AuthController>();
 
-  UserModel? userModel;
+  Rxn<UserModel> userModel = Rxn<UserModel>();
 
   @override
   void initState() {
@@ -44,17 +48,17 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   bool _shouldRefreshPreviousPage = false;
 
   Future<void> loadUserData() async {
-    userModel = await AuthController.getUserData();
-    setState(() {}); // Trigger a rebuild to show the updated user data
+    userModel.value = await authController.getUserData();
   }
 
 
 
+
   void prefillUserData() {
-    _emailController.text = AuthController.userData!.email ?? "";
-    _firstNameController.text = AuthController.userData!.firstName ?? "";
-    _lastNameController.text = AuthController.userData!.lastName ?? "";
-    _mobileController.text = AuthController.userData!.mobile ?? "";
+    _emailController.text = authController.userData.value!.email ?? "";
+    _firstNameController.text = authController.userData.value!.firstName ?? "";
+    _lastNameController.text = authController.userData.value!.lastName ?? "";
+    _mobileController.text = authController.userData.value!.mobile ?? "";
   }
 
 
@@ -213,21 +217,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     }
 
 
-
-    NetworkResponse response = await ApiClient.postRequest(
-        NetworkURL.profileUpdatePassUrl, requestBody);
-    if(response.isSuccess){
-      UserModel userModel = UserModel.fromJson(requestBody);
-      print(requestBody);
-      await AuthController.saveUserData(userModel);
+  final bool result = await taskController.updateProfile(requestBody);
+    if(result){
       await loadUserData();
-      // SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-      // sharedPreferences.reload();
-      // await AuthController.getUserData();
-      // await AuthController.updateUserData(userModel);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text( "Update Successfully")));
+      Get.snackbar("message", "Update Successfully");
     }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.isError.toString())));
+      Get.snackbar("error", taskController.errorMessage.toString());
     }
   }
 

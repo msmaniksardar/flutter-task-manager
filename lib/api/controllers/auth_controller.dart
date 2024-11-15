@@ -1,71 +1,72 @@
 import 'dart:convert';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_manager/api/models/user_model.dart';
 
 
 
-class AuthController {
+class AuthController  extends GetxController{
   static const String _accessTokenKey = 'access-token';
   static const String _accessUserKey = 'access-user';
 
-  static String? accessToken;
-  static UserModel? userData;
+  Rxn<String> accessToken = Rxn<String>();
+  Rxn<UserModel> userData = Rxn<UserModel>();
 
-  static Future<void> saveAccessToken(String token) async {
+   Future<void> saveAccessToken(String token) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     await sharedPreferences.setString(_accessTokenKey, token);
-    accessToken = token;
+    accessToken.value = token;
   }
 
-  static Future<void> saveUserData(UserModel? userModel) async {
+   Future<void> saveUserData(UserModel? userModel) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     await sharedPreferences.setString(
         _accessUserKey, jsonEncode(userModel));
-    userData = userModel;
+    userData.value = userModel;
   }
 
-  static Future<void> updateUserData(UserModel updatedUserData) async {
+   Future<void> updateUserData(UserModel updatedUserData) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     // Save updated user data to SharedPreferences
     await sharedPreferences.setString(_accessUserKey, jsonEncode(updatedUserData));
     // Update the local userData instance
-    userData = updatedUserData;
+    userData.value = updatedUserData;
   }
 
 
 
-  static Future<UserModel?> getUserData ()async{
+   Future<UserModel?> getUserData ()async{
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String? user = sharedPreferences.getString(_accessUserKey);
     if(user == null){
       return null;
     }
     UserModel userModel= UserModel.fromJson(jsonDecode(user));
-    userData = userModel;
+    userData.value = userModel;
     return userModel;
   }
 
-  static Future<String?> getAccessToken() async {
+   Future<String?> getAccessToken() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String? token = sharedPreferences.getString(_accessTokenKey);
-    accessToken = token;
+    accessToken.value = token;
     return token;
   }
 
-  static bool isLoggedIn() {
-    return accessToken != null;
+   bool isLoggedIn() {
+    return accessToken.value != null;
   }
 
-  static Future<void> clearAccessToken() async {
+   Future<void> clearAccessToken() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     await sharedPreferences.remove(_accessTokenKey);
-    accessToken = null;
+    accessToken.value = null;
   }
 
-  static Future<void> clearUserData ()async{
+   Future<void> clearUserData ()async{
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     await sharedPreferences.remove(_accessUserKey);
-    userData = null;
+    userData.value = null;
   }
 
 }

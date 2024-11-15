@@ -5,6 +5,9 @@ import 'package:task_manager/api/models/user_response_model.dart';
 import 'package:task_manager/api/services/api_client.dart';
 import 'package:task_manager/api/utils/urls.dart';
 
+
+final authController = Get.find<AuthController>();
+
 class SignInController extends GetxController {
   RxBool _inProgress = false.obs;
   RxBool _isSuccess = false.obs;
@@ -27,8 +30,8 @@ class SignInController extends GetxController {
       UserResponseModel userResponseModel =
       UserResponseModel.fromJson(response.data);
 
-      await AuthController.saveUserData(userResponseModel.data);
-      await AuthController.saveAccessToken(userResponseModel.token!);
+      await authController.saveUserData(userResponseModel.data);
+      await authController.saveAccessToken(userResponseModel.token!);
       _isSuccess.value = true;
     } else {
       _errorMessage.value = response.isError?.toString() ?? 'Unknown error';
