@@ -3,6 +3,7 @@ import 'package:task_manager/api/controllers/auth_controller.dart';
 import 'package:task_manager/api/controllers/count_controller.dart';
 import 'package:task_manager/api/controllers/sign_in_controller.dart';
 import 'package:task_manager/api/controllers/task_controller.dart';
+import 'package:task_manager/api/controllers/update_profile_controller.dart';
 
 class BindController extends Bindings{
   @override
@@ -11,6 +12,7 @@ class BindController extends Bindings{
     Get.put(TaskController());
     Get.put(CountController());
     Get.put(AuthController());
+    Get.put(UpdateProfileController());
   }
 
 }

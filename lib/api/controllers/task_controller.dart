@@ -11,11 +11,14 @@ import 'package:task_manager/api/utils/urls.dart';
 
 final authController = Get.find<AuthController>();
 
+
+
 class TaskController extends GetxController {
   final RxBool _inProgress = false.obs;
   final RxBool _isSuccess = false.obs;
   final RxString _errorMessage = ''.obs;
   final RxList<TaskModel> taskList = <TaskModel>[].obs;
+
 
   RxString get errorMessage => _errorMessage;
 

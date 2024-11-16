@@ -1,21 +1,15 @@
 import 'dart:convert';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_manager/api/controllers/auth_controller.dart';
 import 'package:task_manager/api/controllers/task_controller.dart';
-import 'package:task_manager/api/models/network_response.dart';
 import 'package:task_manager/api/models/user_model.dart';
-import 'package:task_manager/api/models/user_response_model.dart';
-import 'package:task_manager/api/services/api_client.dart';
-import 'package:task_manager/api/utils/urls.dart';
 import 'package:task_manager/ui/widget/app_bar.dart';
+import 'package:task_manager/ui/widget/background_screen.dart';
 
-import '../utility/app_colors.dart';
-import '../widget/background_screen.dart';
+
 
 class UpdateProfileScreen extends StatefulWidget {
   const UpdateProfileScreen({super.key});
@@ -32,7 +26,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  XFile? _selectedImage;
+  final Rx<XFile?> _selectedImage = Rx<XFile?>(null);
   final taskController = Get.find<TaskController>();
   final authController = Get.find<AuthController>();
 
@@ -47,9 +41,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
 
   bool _shouldRefreshPreviousPage = false;
 
-  Future<void> loadUserData() async {
-    userModel.value = await authController.getUserData();
-  }
 
 
 
@@ -83,7 +74,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       canPop: false,
       onPopInvokedWithResult:(didPop ,dynamic result){
         if(didPop == true){
-         return;
+          return;
         }
         Navigator.pop(context , _shouldRefreshPreviousPage);
 
@@ -127,7 +118,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                 )),
                           ),
                           SizedBox(width: 20,),
-                          Text(_selectedImage?.name ?? "Choose Image")
+                          Text(_selectedImage.value?.name ?? "Choose Image")
                         ],
                       ),
                     ),
@@ -210,30 +201,29 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       requestBody["password"] = _passwordController.text;
     }
 
-    if( _selectedImage != null){
-      List<int> convertBytes = await _selectedImage!.readAsBytes();
+    if( _selectedImage.value != null){
+      List<int> convertBytes = await _selectedImage.value!.readAsBytes();
       String convertImage = base64Encode(convertBytes);
       requestBody["photo"] = convertImage;
     }
 
 
-  final bool result = await taskController.updateProfile(requestBody);
+    final bool result = await taskController.updateProfile(requestBody);
     if(result){
-      await loadUserData();
+
       Get.snackbar("message", "Update Successfully");
     }else{
       Get.snackbar("error", taskController.errorMessage.toString());
     }
   }
 
-  Future<void> _getImage() async{
+  Future<void> _getImage() async {
     final ImagePicker picker = ImagePicker();
     XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if(image != null){
-      _selectedImage = image;
-      setState(() {});
+    if (image != null) {
+      // Update the reactive variable
+      _selectedImage.value = image;
     }
-
   }
 
 

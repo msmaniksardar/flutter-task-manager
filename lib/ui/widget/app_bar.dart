@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task_manager/api/controllers/auth_controller.dart';
 import 'package:task_manager/api/models/user_model.dart';
-import 'package:task_manager/ui/screen/mobile/sign_in_screen_layout.dart';
+import 'package:task_manager/ui/routes/route.dart';
 import 'package:task_manager/ui/screen/update_profile_screen.dart';
 import '../utility/app_colors.dart';
 
-class TMAppBar extends StatefulWidget implements PreferredSizeWidget {
+class TMAppBar extends StatelessWidget implements PreferredSizeWidget {
   TMAppBar({
     super.key,
     this.isProfileScreenOpen = false,
@@ -17,28 +17,9 @@ class TMAppBar extends StatefulWidget implements PreferredSizeWidget {
 
   final bool isProfileScreenOpen;
 
-  @override
-  State<TMAppBar> createState() => _TMAppBarState();
-
-  @override
-  Size get preferredSize => const Size.fromHeight(56);
-}
-
-class _TMAppBarState extends State<TMAppBar> {
   final authController = Get.find<AuthController>();
-  Rxn<UserModel> userModel =Rxn<UserModel>();
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    loadUserData();
-  }
-
-  Future<void> loadUserData() async {
-    userModel.value = await authController.getUserData();
-    await authController.userData.value;
-  }
+  Rxn<UserModel> userModel = Rxn<UserModel>();
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +31,7 @@ class _TMAppBarState extends State<TMAppBar> {
           child: IconButton(
             onPressed: () async {
               await authController.clearAccessToken();
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => SignInScreenLayout()),
-                (_) => false,
-              );
+              Get.offAllNamed(login);
             },
             icon: const Icon(Icons.logout),
             color: Colors.white,
@@ -63,16 +40,13 @@ class _TMAppBarState extends State<TMAppBar> {
       ],
       title: GestureDetector(
         onTap: () async {
-          if (widget.isProfileScreenOpen) {
+          if (isProfileScreenOpen) {
             return;
           }
           bool result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => UpdateProfileScreen()),
           );
-          if (result == false) {
-            await loadUserData();
-          }
         },
         child: Obx(() {
           final user = authController.userData.value;
@@ -119,4 +93,7 @@ class _TMAppBarState extends State<TMAppBar> {
       ),
     );
   }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
 }
